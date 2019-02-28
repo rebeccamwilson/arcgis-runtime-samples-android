@@ -25,42 +25,16 @@ import com.esri.arcgisruntime.mapping.view.SceneView;
 public class MainActivity extends AppCompatActivity {
 
   private static final String TAG = MainActivity.class.getSimpleName();
-
-  private static final String FILE_EXTENSION = ".mspk";
-  private static File extStorDir;
-  private static String extSDCardDirName;
-  private static String filename;
-  private static String mspkFilePath;
   private SceneView mSceneView;
-  String[] reqPermission = new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE };
-  private int requestCode = 2;
-
-  /**
-   * Create the mobile map package file location and name structure
-   */
-  private static String createMobileMapPackageFilePath() {
-    return extStorDir.getAbsolutePath() + File.separator + extSDCardDirName + File.separator + filename
-        + FILE_EXTENSION;
-  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
-
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
-
-    /*extStorDir = Environment.getExternalStorageDirectory();
-    // get the directory
-    extSDCardDirName = this.getResources().getString(R.string.config_data_sdcard_offline_dir);
-    // get mobile map package filename
-    filename = "philadelphia";
-    // create the full path to the mobile map package file
-    mspkFilePath = createMobileMapPackageFilePath();*/
 
     mSceneView = findViewById(R.id.sceneView);
     // create a scene and add it to the scene view
     ArcGISScene scene = new ArcGISScene(Basemap.createImagery());
-    mSceneView.setScene(scene);
 
     // add base surface for elevation data
     final Surface surface = new Surface();
@@ -76,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
   private void checkReadSupport() {
     final String mspkPath =
         Environment.getExternalStorageDirectory() + getString(R.string.config_data_sdcard_offline_dir);
-    Log.d(TAG, "File from sdcard: " + mspkPath);
-
 
     ListenableFuture<Boolean> isDirectReadSupported = MobileScenePackage.isDirectReadSupportedAsync(mspkPath);
     isDirectReadSupported.addDoneListener(() ->
@@ -109,12 +81,9 @@ public class MainActivity extends AppCompatActivity {
 
     mobileScenePackage.addDoneLoadingListener(() ->
     {
-      if (mobileScenePackage.getLoadStatus() == LoadStatus.LOADED && mobileScenePackage.getScenes().size() > 0)
-      {
-        Log.d(TAG,"loading scene package");
-        mSceneView.setScene(mobileScenePackage.getScenes().get(1));
+      if (mobileScenePackage.getLoadStatus() == LoadStatus.LOADED && mobileScenePackage.getScenes().size() > 0) {
+        mSceneView.setScene(mobileScenePackage.getScenes().get(0));
       } else {
-        Log.e(TAG,"failed to load scene package");
         Toast.makeText(MainActivity.this, "Failed to load scene package",
             Toast.LENGTH_SHORT).show();
       }
@@ -147,7 +116,6 @@ public class MainActivity extends AppCompatActivity {
     String[] reqPermission = { Manifest.permission.READ_EXTERNAL_STORAGE };
     int requestCode = 2;
     if (ContextCompat.checkSelfPermission(this, reqPermission[0]) == PackageManager.PERMISSION_GRANTED) {
-      // do something
       checkReadSupport();
     } else {
       // request permission
@@ -161,11 +129,10 @@ public class MainActivity extends AppCompatActivity {
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-      // do something
       checkReadSupport();
     } else {
       // report to user that permission was denied
-    //  Toast.makeText(this, getString(R.string.kml_read_permission_denied), Toast.LENGTH_SHORT).show();
+      Toast.makeText(this, getString(R.string.location_permission_denied), Toast.LENGTH_SHORT).show();
     }
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
   }
